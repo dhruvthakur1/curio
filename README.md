@@ -26,6 +26,7 @@ python scripts/train.py          # tunes, evaluates, writes server/artifacts (~7
 python scripts/build_personas.py # demo shoppers' real histories
 python -m pytest tests
 uvicorn curio.api:app --app-dir server --port 8000   # API docs at /docs
+cd client && npm install && npm run dev               # http://localhost:5174 (proxies /api)
 ```
 
 ## API
@@ -64,6 +65,6 @@ New ratings are folded into the trained ALS model at request time (one least-squ
 1. ✅ Data download, cleaning and split
 2. ✅ ALS + TF-IDF training, fusion, evaluation
 3. ✅ FastAPI backend
-4. React landing and recommendations
+4. ✅ React landing and recommendations
 5. Product page and model lab
 6. Tests, Docker and deploy

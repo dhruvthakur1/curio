@@ -19,6 +19,8 @@ HERE = Path(__file__).resolve().parent
 DEFAULT_ARTIFACTS = HERE.parent / "artifacts"
 PERSONAS_FILE = HERE / "personas.json"
 PERSONAS_HISTORY_FILE = "personas_history.json"
+# Amazon files subscriptions and store credit under "Games"; they make poor onboarding picks.
+NOT_A_GAME = r"membership|subscription|points|gift card|wallet|currency|psn card|live gold|game pass|v-bucks"
 BORING_WORDS = {"games", "game", "legacy", "systems", "video", "accessories", "pc", "features", "product", "new"}
 
 
@@ -310,7 +312,7 @@ class Engine:
 
     def onboarding(self, k: int = 24) -> list[dict]:
         """Well-known games to rate first: the most-liked game per platform, round-robin."""
-        games = self.items[self.items.kind == "game"].copy()
+        games = self.items[(self.items.kind == "game") & ~self.items.title.str.contains(NOT_A_GAME, case=False, regex=True)].copy()
         games["pop"] = self.pop_counts[games.index]
         games = games.sort_values("pop", ascending=False)
         buckets = [g.index.tolist() for _, g in games.groupby("platform", sort=False)]

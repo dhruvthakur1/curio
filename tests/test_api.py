@@ -128,3 +128,10 @@ def test_cards_never_contain_nan(client):
     import math
     for x in client.get("/api/onboarding?k=12").json() + client.get("/api/search?q=space&limit=12").json():
         assert all(not (isinstance(v, float) and not math.isfinite(v)) for v in x.values())
+
+
+def test_onboarding_skips_subscriptions():
+    import re
+    from curio.engine import NOT_A_GAME
+    assert re.search(NOT_A_GAME, "Xbox LIVE 12 Month Gold Membership Card", re.I)
+    assert not re.search(NOT_A_GAME, "Super Mario Odyssey - Nintendo Switch", re.I)

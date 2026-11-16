@@ -8,3 +8,4 @@ data/processed/
 node_modules/
 dist/
 server/artifacts/
+.claude/
