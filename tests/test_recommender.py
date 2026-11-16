@@ -71,3 +71,18 @@ def test_popularity_counts_only_liked_ratings():
     pop = Popularity.fit(r)
     assert pop.counts.tolist() == [2, 1, 0]
     assert pop.score(2).shape == (2, 3)
+
+
+def test_serving_fold_in_matches_training_library():
+    from curio.engine import fold_in
+    from implicit.als import AlternatingLeastSquares
+    rng = np.random.default_rng(1)
+    Y = rng.normal(size=(30, 6)).astype(np.float32)
+    m = AlternatingLeastSquares(factors=6, regularization=0.3, alpha=15.0, use_gpu=False)
+    m.item_factors = Y
+    m.user_factors = np.zeros((1, 6), np.float32)
+    items, vals = np.array([1, 4, 9]), np.array([1.0, 0.8, 0.4], np.float32)
+    row = sp.csr_matrix((vals, (np.zeros(3, int), items)), shape=(1, 30))
+    ref = m.recalculate_user(0, row)
+    ours = fold_in(Y, Y.T.astype(np.float64) @ Y, items, vals, 0.3, 15.0)
+    assert np.allclose(ref, ours, atol=1e-4)

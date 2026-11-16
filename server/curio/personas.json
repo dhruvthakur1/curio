@@ -1,0 +1,23 @@
+[
+  {
+    "id": "retro",
+    "name": "Retro action fan",
+    "blurb": "Lives for classic Castlevania, Contra and 16-bit action.",
+    "user_id": "AEZD2VDHE5O7RDFQBLX7YHXPVIDA",
+    "color": "teal"
+  },
+  {
+    "id": "sports",
+    "name": "Sports sim regular",
+    "blurb": "Buys every year's NBA 2K, Madden and NHL.",
+    "user_id": "AFGBQEDFIXGF2S2MLYANWJ3LSA6A",
+    "color": "amber"
+  },
+  {
+    "id": "new",
+    "name": "New shopper",
+    "blurb": "No history yet. Rate a few products to personalise.",
+    "user_id": null,
+    "color": "slate"
+  }
+]

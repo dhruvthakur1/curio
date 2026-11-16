@@ -20,10 +20,29 @@ After cleaning: **94,762 users · 25,611 products · 814,533 ratings** (density 
 Split is leave-last-out by time: each user's last rating is the test item, the one before it is used to tune α.
 
 ```bash
+pip install -r requirements-dev.txt
 python scripts/prepare_data.py   # reads data/raw, writes data/processed
 python scripts/train.py          # tunes, evaluates, writes server/artifacts (~7 min)
+python scripts/build_personas.py # demo shoppers' real histories
 python -m pytest tests
+uvicorn curio.api:app --app-dir server --port 8000   # API docs at /docs
 ```
+
+## API
+
+| Method | Path | What it does |
+|---|---|---|
+| GET | `/api/stats` | Dataset size and headline test metrics |
+| GET | `/api/metrics` | Full evaluation: ALS grid, α curve, per-segment results |
+| GET | `/api/personas` | Demo shoppers (real anonymised users) with their rating history |
+| POST | `/api/recommend` | `{persona?, ratings?, alpha?, k?, kinds?}` → ranked products with the ALS / TF-IDF split and a reason |
+| POST | `/api/explain` | Why a product ranks where it does for a user: rank, both signal scores, shared TF-IDF terms, closest rated product |
+| GET | `/api/items/{id}` | Product detail with its most distinctive TF-IDF terms |
+| GET | `/api/items/{id}/similar` | "Shoppers also bought" (ALS) and "Similar products" (TF-IDF) rails |
+| GET | `/api/search?q=` | Title search for the cold-start picker |
+| GET | `/api/onboarding` | Well-known games across platforms for new shoppers to rate |
+
+New ratings are folded into the trained ALS model at request time (one least-squares solve, ~1 ms), so a brand-new shopper gets personalised results after a single rating. The API needs only numpy, scipy and pandas; training libraries are dev-only.
 
 ## Results (test set, 25,000 held-out users, top 10 out of all unrated products)
 
@@ -44,7 +63,7 @@ python -m pytest tests
 
 1. ✅ Data download, cleaning and split
 2. ✅ ALS + TF-IDF training, fusion, evaluation
-3. FastAPI backend
+3. ✅ FastAPI backend
 4. React landing and recommendations
 5. Product page and model lab
 6. Tests, Docker and deploy
