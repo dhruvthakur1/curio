@@ -21,13 +21,29 @@ Split is leave-last-out by time: each user's last rating is the test item, the o
 
 ```bash
 python scripts/prepare_data.py   # reads data/raw, writes data/processed
+python scripts/train.py          # tunes, evaluates, writes server/artifacts (~7 min)
 python -m pytest tests
 ```
+
+## Results (test set, 25,000 held-out users, top 10 out of all unrated products)
+
+| Model | Hit Rate@10 | NDCG@10 | Precision@10 | Coverage@10 |
+|---|---|---|---|---|
+| **Hybrid (α = 0.8)** | **8.04%** | **0.0441** | **0.80%** | **18.9%** |
+| ALS only | 7.89% | 0.0429 | 0.79% | 13.7% |
+| TF-IDF only | 2.33% | 0.0116 | 0.23% | 76.3% |
+| Popularity | 2.70% | 0.0134 | 0.27% | 0.07% |
+
+- The hybrid finds the user's real next purchase in its top 10 **~3× as often as popularity**, and matches or beats ALS on accuracy while recommending **39% more of the catalogue** (coverage 13.7% → 18.9%).
+- α was tuned on validation users only (α sweep 0 → 1 in steps of 0.05); the test set was used once.
+- ALS: 128 factors, regularisation 0.5, confidence α 40, 20 iterations (picked from an 8-config grid on validation).
+- Recall@10 equals Hit Rate@10 here because each user has one held-out item.
+- Gains are largest for users with short histories (3–4 ratings: hit rate 9.54% hybrid vs 9.32% ALS).
 
 ## Roadmap
 
 1. ✅ Data download, cleaning and split
-2. ALS + TF-IDF training, fusion, evaluation
+2. ✅ ALS + TF-IDF training, fusion, evaluation
 3. FastAPI backend
 4. React landing and recommendations
 5. Product page and model lab
