@@ -173,7 +173,8 @@ def main(argv=None):
         log("quick run: not saving artifacts")
         return test_metrics
     ART.mkdir(parents=True, exist_ok=True)
-    np.save(ART / "als_item_factors.npy", als.item_factors.astype(np.float32))
+    # float16 halves the file; the API casts back to float32 on load.
+    np.save(ART / "als_item_factors.npy", als.item_factors.astype(np.float16))
     sp.save_npz(ART / "tfidf.npz", tfidf.X.astype(np.float32))
     (ART / "tfidf_terms.json").write_text(json.dumps(tfidf.terms.tolist()))
     np.save(ART / "popularity.npy", pop.counts)

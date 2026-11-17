@@ -6,6 +6,7 @@ Run locally:  uvicorn curio.api:app --reload --app-dir server
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -45,7 +46,12 @@ def get_engine() -> Engine:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Curio API", version="1.0.0",
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        get_engine()  # load the model once at boot, not on the first visitor's request
+        yield
+
+    app = FastAPI(title="Curio API", version="1.0.0", lifespan=lifespan,
                   description="Hybrid ALS + TF-IDF recommender over Amazon Video Games reviews.")
     origins = [o.strip() for o in os.environ.get("CLIENT_URL", "http://localhost:5173").split(",") if o.strip()]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])

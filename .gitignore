@@ -7,5 +7,5 @@ data/processed/
 .env*
 node_modules/
 dist/
-server/artifacts/
 .claude/
+!.env.example

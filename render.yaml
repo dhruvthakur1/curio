@@ -1,0 +1,13 @@
+# Render Blueprint: Curio API (FastAPI) on the free plan.
+services:
+  - type: web
+    name: curio-api
+    runtime: docker
+    plan: free
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: CLIENT_URL
+        sync: false   # your Vercel URL, e.g. https://curio-xyz.vercel.app

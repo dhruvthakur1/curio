@@ -1,5 +1,7 @@
 # Curio — hybrid product recommender
 
+[![CI](https://github.com/dhruvthakur1/curio/actions/workflows/ci.yml/badge.svg)](https://github.com/dhruvthakur1/curio/actions/workflows/ci.yml)
+
 Curio recommends video games and accessories by blending two signals:
 
 - **ALS collaborative filtering** — "shoppers like you also bought" (teal)
@@ -60,6 +62,16 @@ New ratings are folded into the trained ALS model at request time (one least-squ
 - Recall@10 equals Hit Rate@10 here because each user has one held-out item.
 - Gains are largest for users with short histories (3–4 ratings: hit rate 9.54% hybrid vs 9.32% ALS).
 
+## Project structure
+
+```
+scripts/         data cleaning, training + evaluation, persona histories
+server/curio/    recommender (training), engine (serving), FastAPI app
+server/artifacts trained model files the API loads (committed, ~30 MB)
+client/          React + Vite web app (landing, recommendations, product, model lab)
+tests/           pytest: split, models, metrics, API (synthetic model, no data needed)
+```
+
 ## Roadmap
 
 1. ✅ Data download, cleaning and split
@@ -67,4 +79,4 @@ New ratings are folded into the trained ALS model at request time (one least-squ
 3. ✅ FastAPI backend
 4. ✅ React landing and recommendations
 5. ✅ Product page and model lab
-6. Tests, Docker and deploy
+6. ✅ Tests, Docker and deploy config — see [DEPLOY.md](DEPLOY.md)

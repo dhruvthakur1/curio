@@ -1,0 +1,83 @@
+{
+  "retro": [
+    {
+      "item_id": "B00002SW8P",
+      "rating": 4.0
+    },
+    {
+      "item_id": "B000U74ZR2",
+      "rating": 4.0
+    },
+    {
+      "item_id": "B00005AV8W",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B000A4T1U6",
+      "rating": 3.0
+    },
+    {
+      "item_id": "B00004SVO2",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00001OWYW",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B0012NZGJE",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B000UZVL58",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B000GSM06I",
+      "rating": 3.0
+    },
+    {
+      "item_id": "B000HFGKN4",
+      "rating": 5.0
+    }
+  ],
+  "sports": [
+    {
+      "item_id": "B002JTX7SM",
+      "rating": 4.0
+    },
+    {
+      "item_id": "B00CES8GAM",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00KRWTAR0",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00CES8EFY",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00K5I323O",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00K5HTPR2",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00Z9TL6KA",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00XY0IVK4",
+      "rating": 5.0
+    },
+    {
+      "item_id": "B00XZQ58AI",
+      "rating": 5.0
+    }
+  ],
+  "new": []
+}

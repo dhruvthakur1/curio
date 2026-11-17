@@ -107,7 +107,6 @@ class Engine:
         self.Y_unit = self.Y / np.where(norms > 0, norms, 1.0)
 
         self.X = sp.load_npz(artifacts / "tfidf.npz").tocsr().astype(np.float32)
-        self.XT = self.X.T.tocsr()
         self.terms = np.array(json.loads((artifacts / "tfidf_terms.json").read_text(encoding="utf-8")))
         # Category scaffolding ("legacy systems", "pc games") is real signal but a poor explanation.
         self.explainable = np.array([not (set(t.split()) & BORING_WORDS) for t in self.terms])
