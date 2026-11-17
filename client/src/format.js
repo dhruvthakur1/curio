@@ -37,3 +37,13 @@ export function coverGradient(id = '') {
 }
 
 export const pct = (x, digits = 1) => `${(x * 100).toFixed(digits)}%`;
+
+/** Drop terms that just repeat an earlier one ("nes" after "nintendo nes"). */
+export function distinctTerms(terms, n = 3) {
+  const out = [];
+  for (const t of terms) {
+    if (!out.some((o) => o.includes(t) || t.includes(o))) out.push(t);
+    if (out.length === n) break;
+  }
+  return out;
+}

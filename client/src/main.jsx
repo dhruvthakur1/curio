@@ -6,6 +6,8 @@ import { useEffect } from 'react';
 import Landing from './pages/Landing.jsx';
 import Discover from './pages/Discover.jsx';
 import Placeholder from './pages/Placeholder.jsx';
+import Product from './pages/Product.jsx';
+import Lab from './pages/Lab.jsx';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -23,8 +25,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/discover" element={<Discover />} />
-        <Route path="/item/:id" element={<Placeholder title="Product page" />} />
-        <Route path="/lab" element={<Placeholder title="Model lab" />} />
+        <Route path="/item/:id" element={<Product />} />
+        <Route path="/lab" element={<Lab />} />
         <Route path="*" element={<Placeholder title="Page not found" notFound />} />
       </Routes>
     </BrowserRouter>

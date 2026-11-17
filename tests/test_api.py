@@ -135,3 +135,9 @@ def test_onboarding_skips_subscriptions():
     from curio.engine import NOT_A_GAME
     assert re.search(NOT_A_GAME, "Xbox LIVE 12 Month Gold Membership Card", re.I)
     assert not re.search(NOT_A_GAME, "Super Mario Odyssey - Nintendo Switch", re.I)
+
+
+def test_explain_for_an_item_the_shopper_already_rated(client):
+    ex = client.post("/api/explain", json={"item_id": "B000000000", "persona": "retro"}).json()
+    assert ex == {"mode": "rated", "alpha": 0.8, "rating": 5.0}
+    assert client.get("/api/items/B000000000").json()["dataset_ratings"] == 0

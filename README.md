@@ -66,5 +66,5 @@ New ratings are folded into the trained ALS model at request time (one least-squ
 2. ✅ ALS + TF-IDF training, fusion, evaluation
 3. ✅ FastAPI backend
 4. ✅ React landing and recommendations
-5. Product page and model lab
+5. ✅ Product page and model lab
 6. Tests, Docker and deploy

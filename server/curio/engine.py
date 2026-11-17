@@ -171,6 +171,7 @@ class Engine:
             "description": r.description,
             "top_terms": self.item_terms(i, 8),
             "popularity_rank": int((self.pop_counts > self.pop_counts[i]).sum()) + 1,
+            "dataset_ratings": int(r.train_count),
         }
 
     # ---------- signals ----------
@@ -268,6 +269,9 @@ class Engine:
         alpha = self.default_alpha if alpha is None else float(alpha)
         if not rated:
             return {"mode": "popularity", "alpha": alpha, "popularity_rank": self.detail(i)["popularity_rank"]}
+        own = next((r for r in rated if r.index == i), None)
+        if own is not None:
+            return {"mode": "rated", "alpha": alpha, "rating": own.rating}
         als, tf, prof, _ = self.signals(rated)
         score = alpha * als + (1 - alpha) * tf
         rank = int((score > score[i]).sum()) + 1

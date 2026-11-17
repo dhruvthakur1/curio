@@ -4,21 +4,14 @@ import { Search, RotateCcw } from 'lucide-react';
 import { api } from '../api.js';
 import { Blobs, Footer, Header, useSearch } from '../components/Layout.jsx';
 import Cover from '../components/Cover.jsx';
-import { initials, itemMeta, shortTitle } from '../format.js';
+import { distinctTerms, initials, itemMeta, shortTitle } from '../format.js';
+import { prefs } from '../prefs.js';
 
 const AVATAR = {
   teal: 'linear-gradient(135deg,#0F766E,#2DD4BF)',
   amber: 'linear-gradient(135deg,#C2410C,#F59E0B)',
   slate: 'linear-gradient(135deg,#475569,#94A3B8)',
 };
-const STORE_KEY = 'curio.newShopperRatings';
-
-function loadRatings() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
-}
-function saveRatings(r) {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(r)); } catch { /* private mode: keep in memory */ }
-}
 
 function personaSub(p, ratedCount) {
   if (p.cold) return ratedCount ? `You’ve rated ${ratedCount} game${ratedCount > 1 ? 's' : ''}` : 'No ratings yet — cold start';
@@ -115,7 +108,7 @@ function RecCard({ r, rank, mode, index }) {
     const ordered = r.als >= r.tfidf ? [als, tf] : [tf, als];
     ordered.filter(Boolean).forEach((c) => chips.push(c));
     // Skip a second term that just repeats the first ("nes" / "nintendo nes").
-    const extra = r.terms?.slice(1).find((t) => !t.includes(r.terms[0]) && !r.terms[0].includes(t));
+    const extra = r.terms ? distinctTerms(r.terms, 2)[1] : null;
     if (extra && tf && chips.length < 3) chips.push(['chip-tfidf', `“${extra}”`]);
   }
   const label = mode === 'hybrid'
@@ -144,11 +137,11 @@ function RecCard({ r, rank, mode, index }) {
 
 export default function Discover() {
   const [personas, setPersonas] = useState([]);
-  const [personaId, setPersonaId] = useState('retro');
+  const [personaId, setPersonaId] = useState(prefs.persona);
   const [tuned, setTuned] = useState(0.8);
-  const [alpha, setAlpha] = useState(null);
+  const [alpha, setAlpha] = useState(prefs.alpha);
   const [gamesOnly, setGamesOnly] = useState(true);
-  const [ratings, setRatings] = useState(loadRatings);
+  const [ratings, setRatings] = useState(prefs.ratings);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -161,6 +154,9 @@ export default function Discover() {
   }, [retry]);
 
   const persona = personas.find((p) => p.id === personaId);
+  useEffect(() => {
+    if (personas.length && !personas.some((p) => p.id === personaId)) setPersonaId(personas[0].id);
+  }, [personas, personaId]);
   const ratingList = useMemo(
     () => Object.values(ratings).map((r) => ({ item_id: r.item.id, rating: r.rating })),
     [ratings],
@@ -189,11 +185,13 @@ export default function Discover() {
     setRatings((prev) => {
       const next = { ...prev };
       if (n) next[item.id] = { rating: n, item }; else delete next[item.id];
-      saveRatings(next);
+      prefs.setRatings(next);
       return next;
     });
   }, []);
-  const clear = () => { setRatings({}); saveRatings({}); };
+  const clear = () => { setRatings({}); prefs.setRatings({}); };
+  useEffect(() => { prefs.setPersona(personaId); }, [personaId]);
+  useEffect(() => { if (alpha != null) prefs.setAlpha(alpha); }, [alpha]);
 
   const alphaPct = Math.round((alpha ?? tuned) * 100);
   const mode = result?.mode;
