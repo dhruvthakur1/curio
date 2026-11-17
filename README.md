@@ -1,82 +1,148 @@
-# Curio — hybrid product recommender
+# Curio
 
 [![CI](https://github.com/dhruvthakur1/curio/actions/workflows/ci.yml/badge.svg)](https://github.com/dhruvthakur1/curio/actions/workflows/ci.yml)
 
-Curio recommends video games and accessories by blending two signals:
+A game recommender that shows its working.
 
-- **ALS collaborative filtering** — "shoppers like you also bought" (teal)
-- **TF-IDF content similarity** — "what the product is about" (amber)
+Curio suggests video games and gear by combining two signals: **what shoppers like you bought** and **what the product
+is actually about**. Every recommendation shows how much each signal contributed and why, down to the shared
+keywords and the game you rated that led to it.
 
-`score = α · ALS + (1 − α) · TF-IDF`, with a popularity fallback for brand-new users.
+> **Live demo:** coming soon (Render and Vercel). It runs locally in a couple of commands; see
+> [Running it locally](#running-it-locally).
+
+---
+
+## Where this came from
+
+During my internship at IBM I worked in a team of four on a hybrid recommendation system: ALS for user–item
+interactions, TF-IDF for product content, a weighted blend of the two, and popularity as a fallback for new users.
+
+That code belongs to IBM and used internal data, so I couldn't show it to anyone. **Curio is my own rebuild from
+scratch** on a public dataset, with a proper evaluation and a UI that makes the model's reasoning visible. It's the
+project I point to when someone asks what I did on my internship.
+
+## How it works
+
+```
+ ratings ──▶ ALS (implicit)  ──┐
+                               ├─▶ normalise per shopper ─▶ α·ALS + (1−α)·TF-IDF ─▶ top picks
+ product text ─▶ TF-IDF ───────┘                                    │
+                                     no history yet? ─▶ popularity ─┘
+```
+
+- **ALS (collaborative filtering)** learns 128-dimensional "taste" vectors for shoppers and products from 625,000
+  ratings. It's good at "people who bought this also bought that".
+- **TF-IDF (content)** turns each product's title, categories, features and description into a weighted keyword
+  vector. It's good at "this is about the same kind of thing", even for products few people have rated.
+- **The blend:** both scores are scaled to 0–1 for each shopper, then mixed with a weight α. I tuned α on held-out data
+  instead of picking it by hand; it landed at **0.8**.
+- **New shoppers** start with popular picks. After a **single rating** Curio personalises: it folds the new shopper into
+  the trained model with one least-squares solve (about 1 ms), with no retraining.
+
+## Does the blend actually help?
+
+I hid each shopper's most recent purchase and asked every model to find it among **all 25,611 products**. These are the
+results on 25,000 test shoppers:
+
+| Model | Hit rate @10 | NDCG @10 | Catalogue coverage @10 |
+|---|---|---|---|
+| **Hybrid (α = 0.8)** | **8.04%** | **0.0441** | **18.9%** |
+| ALS only | 7.89% | 0.0429 | 13.7% |
+| TF-IDF only | 2.33% | 0.0116 | 76.3% |
+| Most popular | 2.70% | 0.0134 | 0.07% |
+
+What I take from it:
+
+- The hybrid finds the real next purchase **about 3× as often as "most popular"**.
+- Against ALS alone, the accuracy gain is small (around 2%). **The real win is variety:** the hybrid recommends **39%
+  more of the catalogue** at the same accuracy, instead of pushing the same bestsellers to everyone.
+- ~8% sounds low until you remember the task: pick one exact product out of 25,000, in 10 guesses.
+
+The split is by time (train on the past, test on the future). The ALS settings and α were chosen on a separate
+validation set, and the test set was used once, at the end. The **Model lab** page in the app shows the full α curve,
+the ALS grid search and results by shopper history length.
+
+## What you can do in the app
+
+- **Pick a sample shopper** (two real, anonymised people from the dataset) or start fresh and rate a few games.
+- **Drag the α slider** and watch the list re-rank, from pure content to pure collaborative.
+- **Open any product** to see why it was picked: its rank, the ALS/TF-IDF split, the game you liked that led to it, and
+  the shared keywords. Each product also has "similar by description" and "fans also bought" rails.
+- **Search** all 25,000+ products.
+
+## Tech stack
+
+| | |
+|---|---|
+| Modelling | Python, pandas, scipy, scikit-learn (TF-IDF), implicit (ALS) |
+| API | FastAPI; serving needs only numpy, scipy and pandas, which keeps it small |
+| Frontend | React 18, React Router, Vite |
+| Testing | pytest (unit tests, metric tests and API tests against a tiny synthetic model) |
+| DevOps | Docker, GitHub Actions, Render and Vercel config |
 
 ## Data
 
-[Amazon Reviews 2023](https://amazon-reviews-2023.github.io/) (McAuley Lab, UC San Diego), Video Games category:
+[Amazon Reviews 2023](https://amazon-reviews-2023.github.io/) from the McAuley Lab at UC San Diego, Video Games
+category: the 5-core ratings file (12.8 MB) and the product metadata (103 MB). After cleaning:
+**94,762 shoppers · 25,611 products · 814,533 ratings**.
 
-| File | Size | Used for |
-|---|---|---|
-| `benchmark/5core/rating_only/Video_Games.csv.gz` | 12.8 MB | ALS training and evaluation |
-| `raw/meta_categories/meta_Video_Games.jsonl.gz` | 103 MB | TF-IDF text, titles, images |
+The raw data isn't in this repo, but the trained model files are (`server/artifacts/`, about 30 MB), so the API runs
+without downloading anything.
 
-After cleaning: **94,762 users · 25,611 products · 814,533 ratings** (density 0.034%).
-Split is leave-last-out by time: each user's last rating is the test item, the one before it is used to tune α.
+## Running it locally
 
 ```bash
 pip install -r requirements-dev.txt
-python scripts/prepare_data.py   # reads data/raw, writes data/processed
-python scripts/train.py          # tunes, evaluates, writes server/artifacts (~7 min)
-python scripts/build_personas.py # demo shoppers' real histories
-python -m pytest tests
-uvicorn curio.api:app --app-dir server --port 8000   # API docs at /docs
-cd client && npm install && npm run dev               # http://localhost:5174 (proxies /api)
+uvicorn curio.api:app --app-dir server --port 8000      # API, docs at /docs
+cd client && npm install && npm run dev                  # app on http://localhost:5174
+python -m pytest                                         # tests
 ```
 
-## API
+To retrain from scratch, download the two data files into `data/raw/` (links above), then:
+
+```bash
+python scripts/prepare_data.py    # clean and split by time
+python scripts/train.py           # grid search, α sweep, test evaluation (~7 min)
+python scripts/build_personas.py  # sample shoppers' histories
+```
+
+<details>
+<summary><strong>API reference</strong></summary>
 
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/stats` | Dataset size and headline test metrics |
-| GET | `/api/metrics` | Full evaluation: ALS grid, α curve, per-segment results |
-| GET | `/api/personas` | Demo shoppers (real anonymised users) with their rating history |
-| POST | `/api/recommend` | `{persona?, ratings?, alpha?, k?, kinds?}` → ranked products with the ALS / TF-IDF split and a reason |
-| POST | `/api/explain` | Why a product ranks where it does for a user: rank, both signal scores, shared TF-IDF terms, closest rated product |
-| GET | `/api/items/{id}` | Product detail with its most distinctive TF-IDF terms |
-| GET | `/api/items/{id}/similar` | "Shoppers also bought" (ALS) and "Similar products" (TF-IDF) rails |
-| GET | `/api/search?q=` | Title search for the cold-start picker |
-| GET | `/api/onboarding` | Well-known games across platforms for new shoppers to rate |
+| GET | `/api/metrics` | Full evaluation: grid search, α curve, results by history length |
+| GET | `/api/personas` | Sample shoppers and their rating history |
+| POST | `/api/recommend` | `{persona?, ratings?, alpha?, k?, kinds?}` → ranked products with the ALS/TF-IDF split and a reason |
+| POST | `/api/explain` | Why one product ranks where it does for a shopper |
+| GET | `/api/items/{id}` | Product details and its most distinctive keywords |
+| GET | `/api/items/{id}/similar` | "Similar by description" and "fans also bought" |
+| GET | `/api/search?q=` | Title search |
+| GET | `/api/onboarding` | Well-known games for new shoppers to rate |
 
-New ratings are folded into the trained ALS model at request time (one least-squares solve, ~1 ms), so a brand-new shopper gets personalised results after a single rating. The API needs only numpy, scipy and pandas; training libraries are dev-only.
-
-## Results (test set, 25,000 held-out users, top 10 out of all unrated products)
-
-| Model | Hit Rate@10 | NDCG@10 | Precision@10 | Coverage@10 |
-|---|---|---|---|---|
-| **Hybrid (α = 0.8)** | **8.04%** | **0.0441** | **0.80%** | **18.9%** |
-| ALS only | 7.89% | 0.0429 | 0.79% | 13.7% |
-| TF-IDF only | 2.33% | 0.0116 | 0.23% | 76.3% |
-| Popularity | 2.70% | 0.0134 | 0.27% | 0.07% |
-
-- The hybrid finds the user's real next purchase in its top 10 **~3× as often as popularity**, and matches or beats ALS on accuracy while recommending **39% more of the catalogue** (coverage 13.7% → 18.9%).
-- α was tuned on validation users only (α sweep 0 → 1 in steps of 0.05); the test set was used once.
-- ALS: 128 factors, regularisation 0.5, confidence α 40, 20 iterations (picked from an 8-config grid on validation).
-- Recall@10 equals Hit Rate@10 here because each user has one held-out item.
-- Gains are largest for users with short histories (3–4 ratings: hit rate 9.54% hybrid vs 9.32% ALS).
-
-## Project structure
+</details>
 
 ```
-scripts/         data cleaning, training + evaluation, persona histories
-server/curio/    recommender (training), engine (serving), FastAPI app
-server/artifacts trained model files the API loads (committed, ~30 MB)
-client/          React + Vite web app (landing, recommendations, product, model lab)
-tests/           pytest: split, models, metrics, API (synthetic model, no data needed)
+scripts/          data cleaning, training and evaluation, sample shoppers
+server/curio/     recommender (training), engine (serving), FastAPI app
+server/artifacts/ trained model files the API loads
+client/           React app: landing, recommendations, product page, model lab
+tests/            pytest suite (needs no data download)
 ```
 
-## Roadmap
+## Deploying
 
-1. ✅ Data download, cleaning and split
-2. ✅ ALS + TF-IDF training, fusion, evaluation
-3. ✅ FastAPI backend
-4. ✅ React landing and recommendations
-5. ✅ Product page and model lab
-6. ✅ Tests, Docker and deploy config — see [DEPLOY.md](DEPLOY.md)
+[DEPLOY.md](DEPLOY.md): the API goes on Render (Docker, free plan, about 210 MB of memory) and the frontend on Vercel.
+No database or secrets are needed.
+
+## What I'd try next
+
+- A sequential model that cares about order, since what you buy next depends a lot on what you just bought
+- Sentence embeddings instead of TF-IDF, so "metroidvania" and "exploration platformer" count as close
+- Diversity re-ranking, so one franchise can't take all ten slots
+
+---
+
+Built by [Dhruv Thakur](https://github.com/dhruvthakur1).
