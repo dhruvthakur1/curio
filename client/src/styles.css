@@ -42,6 +42,8 @@ button { font-family: inherit; }
 /* ---------- page shell ---------- */
 .page { min-height: 100vh; position: relative; overflow: clip; display: flex; flex-direction: column; }
 .page > *:not(.blobs) { position: relative; z-index: 1; }
+/* The rule above would otherwise cancel the header's sticky positioning. */
+.page > .site-header { position: sticky; top: 0; }
 .page main { flex: 1; }
 /* Auto margins stop flex items stretching, so a centred main needs an explicit width. */
 .page > main.wrap { width: 100%; }

@@ -11,6 +11,21 @@ keywords and the game you rated that led to it.
 > **Live demo:** coming soon (Render and Vercel). It runs locally in a couple of commands; see
 > [Running it locally](#running-it-locally).
 
+![Curio landing page: two signals flowing into one ranked list](docs/screenshots/landing.png)
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/recommendations.png" alt="Recommendations with the ALS / TF-IDF split on every card"></td>
+    <td width="33%"><img src="docs/screenshots/product.png" alt="Product page explaining why it was recommended"></td>
+    <td width="33%"><img src="docs/screenshots/model-lab.png" alt="Model lab comparing every model on the test set"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Recommendations + α slider</sub></td>
+    <td align="center"><sub>"Why Curio picked this"</sub></td>
+    <td align="center"><sub>Model lab</sub></td>
+  </tr>
+</table>
+
 ---
 
 ## Where this came from
